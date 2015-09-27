@@ -22,11 +22,14 @@ library
                        PKCloud.Core
                        PKCloud.Security
   build-depends:       base >= 4.7 && < 5
+                     , persistent-template
                      , text
                      , time
                      , yesod-core
                      , yesod-auth
   default-language:    Haskell2010
+  default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes
+  ghc-options:         -Werror -Wall -fno-warn-orphans -fno-warn-type-defaults -fno-warn-name-shadowing
 
 -- executable new-template-exe
 --   hs-source-dirs:      app

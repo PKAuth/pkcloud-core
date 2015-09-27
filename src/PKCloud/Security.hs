@@ -1,7 +1,7 @@
-{-# LANGUAGE TemplateHaskell #-}
 module PKCloud.Security where
 
-import PKCloud.Import
+import Database.Persist.TH
+-- import PKCloud.Import
 
 -- Switch to an arbitrary lattice??
 data PermissionLevel = 
@@ -10,7 +10,7 @@ data PermissionLevel =
     | PermissionLevelWrite
     
     deriving (Show, Read, Eq)
--- derivePersistField "PermissionLevel"
+derivePersistField "PermissionLevel"
 
 -- -- config/models
 -- AccessControlList
