@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module PKCloud.Security where
 
-import Import
+import PKCloud.Import
 
 -- Switch to an arbitrary lattice??
 data PermissionLevel = 
