@@ -22,13 +22,17 @@ library
                        PKCloud.Core
                        PKCloud.Security
   build-depends:       base >= 4.7 && < 5
+                     , esqueleto
                      , persistent-template
+                     , persistent
                      , text
                      , time
-                     , yesod-core
+                     , transformers
                      , yesod-auth
+                     , yesod-core
+                     , yesod-persistent
   default-language:    Haskell2010
-  default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes
+  default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, ConstraintKinds
   ghc-options:         -Werror -Wall -fno-warn-orphans -fno-warn-type-defaults -fno-warn-name-shadowing
 
 -- executable new-template-exe

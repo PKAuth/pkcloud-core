@@ -1,3 +1,4 @@
+-- | User configurable site should typically import this module. 
 module PKCloud (module Export) where
 
 import PKCloud.Core as Export
