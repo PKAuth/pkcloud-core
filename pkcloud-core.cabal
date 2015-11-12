@@ -30,6 +30,7 @@ library
                      , transformers
                      , yesod-auth
                      , yesod-core
+                     , yesod-form
                      , yesod-persistent
   default-language:    Haskell2010
   default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, ConstraintKinds
