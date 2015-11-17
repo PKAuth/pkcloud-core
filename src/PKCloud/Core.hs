@@ -22,6 +22,14 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKClo
     pkcloudDefaultLayout :: WidgetT master IO () -> HandlerT master IO Html
     pkcloudSetTitle :: Html -> WidgetT master IO ()
 
+    -- | Set a successful message. By default, just calls `setMessage`. 
+    pkcloudSetMessageSuccess :: Text -> HandlerT master IO ()
+    pkcloudSetMessageSuccess = setMessage . toHtml
+
+    -- | Set a danger message. By default, just calls `setMessage`. 
+    pkcloudSetMessageDanger :: Text -> HandlerT master IO ()
+    pkcloudSetMessageDanger = setMessage . toHtml
+
 -- TODO: Move to Yesod.Core.
 class ToMasterRoute child parent where
     toMasterRoute :: Route child -> Route parent
