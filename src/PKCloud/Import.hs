@@ -8,7 +8,7 @@ import Data.Time.Clock as Export (UTCTime)
 import Database.Esqueleto as Export
 -- import Database.Persist.Class as Export (EntityField)
 import Yesod.Auth as Export
-import Yesod.Core as Export hiding (Value)
+import Yesod.Core as Export hiding (Value, setTitle)
 import Yesod.Form as Export
 import Yesod.Form.Bootstrap3 as Export
 -- import Yesod.Persist.Core as Export

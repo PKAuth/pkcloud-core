@@ -20,6 +20,7 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKClo
 --     -- Type classes to get user info???
 --     -- name, ...
     pkcloudDefaultLayout :: WidgetT master IO () -> HandlerT master IO Html
+    pkcloudSetTitle :: Html -> WidgetT master IO ()
 
 -- TODO: Move to Yesod.Core.
 class ToMasterRoute child parent where
