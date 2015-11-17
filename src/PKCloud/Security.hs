@@ -41,11 +41,11 @@ derivePersistField "PermissionLevel"
 --     member UserId
 --     UniqueGroupMember group member
 
-class SecurityPermissions a where
-    canRead :: a -> m Bool
-    canWrite :: a -> m Bool
-    canCreate :: a -> m Bool
-    canAdmin :: a -> m Bool
+class PKCloudSecurityPermissions a where
+    pkcloudCanRead :: a -> m Bool
+    pkcloudCanWrite :: a -> m Bool
+    pkcloudCanCreate :: a -> m Bool
+    pkcloudCanAdmin :: a -> m Bool
 
 -- -- Render widget to display/update
 -- renderPermissionWidget :: AccessControlListId -> Widget

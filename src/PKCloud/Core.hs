@@ -1,13 +1,10 @@
 module PKCloud.Core where
 
 import Control.Monad.Trans.Reader
-
 import Data.Text (Text)
 import Database.Esqueleto as Export
 import Yesod.Auth
 import Yesod.Core hiding (Value)
-
--- import PKCloud.Import
 
 -- | Typeclass that each pkcloud application needs to implement. 
 class PKCloudApp app where
@@ -34,6 +31,7 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKClo
 class ToMasterRoute child parent where
     toMasterRoute :: Route child -> Route parent
 
+-- Note: Move GeneralPersist to a new library??
 -- | Generalized `runDB` for database transactions with any underlying monad. 
 class Monad m => GeneralPersist site m | m -> site where
     type GeneralPersistBackend site
@@ -41,6 +39,3 @@ class Monad m => GeneralPersist site m | m -> site where
 
 -- class (GeneralPersistBackend site ~ SqlBackend, MonadIO m, GeneralPersist site m) => GeneralPersistSql site m
 type GeneralPersistSql site m = (GeneralPersistBackend site ~ SqlBackend, MonadIO m, GeneralPersist site m)
-
--- class (PersistEntity e, SqlBackend ~ PersistEntityBackend e) => SubEntity e
-type SubEntity e = (PersistEntity e, SqlBackend ~ PersistEntityBackend e)
