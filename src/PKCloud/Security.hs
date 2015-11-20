@@ -1,7 +1,7 @@
 module PKCloud.Security where
 
 import Database.Persist.TH
--- import PKCloud.Import
+import Yesod.Core.Types
 
 -- Switch to an arbitrary lattice??
 data PermissionLevel = 
@@ -41,11 +41,11 @@ derivePersistField "PermissionLevel"
 --     member UserId
 --     UniqueGroupMember group member
 
-class PKCloudSecurityPermissions a where
-    pkcloudCanRead :: a -> m Bool
-    pkcloudCanWrite :: a -> m Bool
-    pkcloudCanCreate :: a -> m Bool
-    pkcloudCanAdmin :: a -> m Bool
+class PKCloudSecurityPermissions master a where
+    pkcloudCanRead :: a -> HandlerT master IO Bool
+    pkcloudCanWrite :: a -> HandlerT master IO Bool
+    pkcloudCanCreate :: a -> HandlerT master IO Bool
+    pkcloudCanAdmin :: a -> HandlerT master IO Bool
 
 -- -- Render widget to display/update
 -- renderPermissionWidget :: AccessControlListId -> Widget

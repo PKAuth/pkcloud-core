@@ -19,6 +19,12 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKClo
     pkcloudDefaultLayout :: WidgetT master IO () -> HandlerT master IO Html
     pkcloudSetTitle :: Html -> WidgetT master IO ()
 
+    -- Retrieve the display name for a user.
+    pkcloudDisplayName :: AuthId master -> HandlerT master IO Text
+
+    -- Retrieve the unique username for a user. 
+    pkcloudUniqueUsername :: AuthId master -> HandlerT master IO Text
+
     -- | Set a successful message. By default, just calls `setMessage`. 
     pkcloudSetMessageSuccess :: Text -> HandlerT master IO ()
     pkcloudSetMessageSuccess = setMessage . toHtml
