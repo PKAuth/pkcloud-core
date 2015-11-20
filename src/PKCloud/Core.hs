@@ -8,9 +8,14 @@ import Yesod.Core hiding (Value)
 
 -- | Typeclass that each pkcloud application needs to implement. 
 class PKCloudApp app where
+    -- | App's display name.
     pkcloudAppName :: app -> Text
-    pkcloudAppIcon :: app -> () -- TODO: route to icon...
-    pkcloudAppSummaryWidget :: app -> WidgetT app m ()
+
+    -- | App's unique identifier. Should only be lowercase alphabetical characters and dashes (-).
+    pkcloudAppIdentifier :: app -> Text
+
+    -- pkcloudAppIcon :: app -> () -- TODO: route to icon...
+    -- pkcloudAppSummaryWidget :: app -> WidgetT app m ()
 
 -- | Typeclass that final website needs to implement. 
 class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKCloud master where
@@ -32,6 +37,10 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKClo
     -- | Set a danger message. By default, just calls `setMessage`. 
     pkcloudSetMessageDanger :: Text -> HandlerT master IO ()
     pkcloudSetMessageDanger = setMessage . toHtml
+
+    -- | Specifies whether the given app is enabled for the given user. 
+    pkcloudAppEnabled :: (PKCloudApp app) => app -> AuthId master -> HandlerT master IO Bool
+    pkcloudAppEnabled _ _ = return True
 
 -- TODO: Move to Yesod.Core.
 class ToMasterRoute child parent where
