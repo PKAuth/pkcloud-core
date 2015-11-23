@@ -24,8 +24,9 @@ library
                        PKCloud.Security
   build-depends:       base >= 4.7 && < 5
                      , esqueleto
-                     , persistent-template
                      , persistent
+                     , persistent-template
+                     , shakespeare
                      , text
                      , time
                      , transformers
