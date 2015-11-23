@@ -21,7 +21,7 @@ class PKCloudApp app where
 class (GeneralPersistSql master (HandlerT master IO), YesodAuth master) => PKCloud master where
 --     -- Type classes to get user info???
 --     -- name, ...
-    pkcloudDefaultLayout :: WidgetT master IO () -> HandlerT master IO Html
+    pkcloudDefaultLayout :: (PKCloudApp app) => app -> WidgetT master IO () -> HandlerT master IO Html
     pkcloudSetTitle :: Html -> WidgetT master IO ()
 
     -- Retrieve the display name for a user.
