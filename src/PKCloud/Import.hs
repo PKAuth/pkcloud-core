@@ -3,6 +3,7 @@
 module PKCloud.Import (module Export) where
 
 import Data.Int as Export
+import Data.Monoid as Export (Monoid(..), (<>))
 import Data.Text as Export (Text)
 import Data.Time.Clock as Export (UTCTime)
 import Database.Esqueleto as Export
