@@ -24,14 +24,16 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master, PersistF
     pkcloudDefaultLayout :: (PKCloudApp app) => app -> WidgetT master IO () -> HandlerT master IO Html
     pkcloudSetTitle :: Html -> WidgetT master IO ()
 
-    -- Retrieve the display name for a user.
+    -- | Retrieve the display name for a user.
     pkcloudDisplayName :: AuthId master -> HandlerT master IO Text
 
-    -- Retrieve the unique username for a user. 
+    -- | Retrieve the unique username for a user. 
+    -- Usernames should be url safe.
     pkcloudUniqueUsername :: AuthId master -> HandlerT master IO Text
 
-    -- Retrieve user for unique username.
-    pkcloudLookupUniqueUsername :: Text -> HandlerT master IO (AuthId master)
+    -- | Retrieve user for unique username.
+    -- Usernames should be url safe.
+    pkcloudLookupUniqueUsername :: Text -> HandlerT master IO (Maybe (AuthId master))
 
     -- | Set a successful message. By default, just calls `setMessage`. 
     pkcloudSetMessageSuccess :: Text -> HandlerT master IO ()
