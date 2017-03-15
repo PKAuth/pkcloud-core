@@ -3,12 +3,15 @@ module PKCloud.Security (
     , PermissionLevel(..)
     , PKCloudSecurityGroup(..)
     , PKCloudSecurityToSecurityGroup(..)
+    , pkcloudRequireRead
     ) where
 
+import Control.Monad (when)
 import Data.Text (Text)
 import Database.Persist
 import Database.Persist.TH
 import Yesod.Auth (AuthId, requireAuthId)
+import Yesod.Core (permissionDenied)
 import Yesod.Core.Types
 
 import PKCloud.Internal
@@ -19,6 +22,14 @@ class PKCloudSecurityPermissions master a where
     pkcloudCanWrite :: a -> HandlerT master IO Bool
     pkcloudCanCreate :: a -> HandlerT master IO Bool
     pkcloudCanAdmin :: a -> HandlerT master IO Bool
+
+-- | Requires that the current user can read `a`. 
+-- Otherwise, returns 403 permission denied.
+pkcloudRequireRead :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireRead a = do
+    allowed <- pkcloudCanRead a
+    when (not allowed) $ 
+        permissionDenied "Permission Denied"
 
 -- Switch to an arbitrary lattice??
 data PermissionLevel = 
@@ -43,48 +54,17 @@ class (SubEntityBackend master (SecurityGroupMember master), SubEntityBackend ma
     getPrimarySecurityGroup :: AuthId master -> Key (SecurityGroup master)
 
 
--- class PKCloudSecurityAccessControlList master acl member where
---     accessControlListId :: acl -> Key acl
---     accessControlListName :: acl -> Text
--- 
---     -- Returns the user's primary ACL (User's default ACL, typically only contains the user as an admin).
---     getPrimaryACL :: UserId -> AccessControlListId
-
-
 -- -- config/models
--- AccessControlList
+-- SecurityGroup
 --     name Text
 -- 
--- AccessControlListUser
---     acl AccessControlListId
---     user UserId
---     permission PermissionLevel
---     UniqueAccessControlListUser user acl
--- 
---
-
-
-
--- Old...?
--- 
--- AccessControlListGroup
---     group GroupId
---     acl AccessControlListId
---     permission PermissionLevel
---     UniqueAccessControlListGroup group acl
--- 
--- User
---     identity Text
---     UniqueUserIdentity identity
--- 
--- Group
---     name Text
---     UniqueGroupName name
--- 
--- GroupMember
---     group GroupId
+-- SecurityGroupMember
+--     group SecurityGroupId
 --     member UserId
---     UniqueGroupMember group member
+--     permission PermissionLevel
+--     UniqueSecurityGroupMember group member
+
+
 
 class PKCloudSecurityGroup master => PKCloudSecurityToSecurityGroup master a where
     -- Get the security group that manages the given type. 
@@ -107,10 +87,6 @@ pkcloudSecurityPermissionsHelper rl a = do
             Just member ->
                 return $ pkSecurityGroupMemberPermission (entityVal member) >= rl
         
-
-    
-    
-
 -- -- Render widget to display/update
 -- renderPermissionWidget :: AccessControlListId -> Widget
 -- renderPermissionWidget aclId = undefined

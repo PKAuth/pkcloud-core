@@ -2,7 +2,7 @@ module PKCloud.Core where
 
 import Control.Monad.Trans.Reader
 import Data.Text (Text)
-import Database.Esqueleto as Export
+import Database.Esqueleto -- as Export
 import Yesod.Auth
 import Yesod.Core hiding (Value)
 
