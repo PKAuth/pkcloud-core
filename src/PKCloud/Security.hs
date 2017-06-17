@@ -80,7 +80,7 @@ pkcloudSecurityPermissionsHelper :: (PKCloudSecurityToSecurityGroup site a) => P
 pkcloudSecurityPermissionsHelper rl a = do
         userId <- requireAuthId
         groupId <- pkcloudToSecurityGroup a
-        memberM <- runDB' $ getBy $ pkSecurityGroupUniqueMember groupId userId
+        memberM <- runDB $ getBy $ pkSecurityGroupUniqueMember groupId userId
         case memberM of
             Nothing ->
                 return False

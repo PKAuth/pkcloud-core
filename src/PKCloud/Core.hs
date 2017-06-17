@@ -55,7 +55,7 @@ class ToMasterRoute child parent where
 -- | Generalized `runDB` for database transactions with any underlying monad. 
 class Monad m => GeneralPersist site m | m -> site where
     type GeneralPersistBackend site
-    runDB' :: ReaderT (GeneralPersistBackend site) m a -> m a
+    runDB :: ReaderT (GeneralPersistBackend site) m a -> m a
 
 -- class (GeneralPersistBackend site ~ SqlBackend, MonadIO m, GeneralPersist site m) => GeneralPersistSql site m
 type GeneralPersistSql site m = (GeneralPersistBackend site ~ SqlBackend, MonadIO m, GeneralPersist site m)
