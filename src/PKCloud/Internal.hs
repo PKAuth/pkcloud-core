@@ -4,16 +4,17 @@ module PKCloud.Internal where
 
 import Control.Monad.IO.Class
 import Yesod.Persist.Core (YesodPersistBackend)
+import Data.Aeson (ToJSON, FromJSON)
 import Data.Text (Text)
 import qualified Data.Time.Clock as Time
-import Database.Esqueleto as Export
+import Database.Esqueleto as Export hiding (Value)
 import Text.Shakespeare.I18N (RenderMessage)
 import Yesod.Core (whamlet, HandlerSite, PathPiece)
 import Yesod.Form.Fields (checkBoxField)
 import Yesod.Form.Types (Field(..), FormMessage)
 
 -- | Type constraint for subsite persistent entities for convenience. 
-type SubEntity e = (PersistEntity e, SqlBackend ~ PersistEntityBackend e, PathPiece (Key e))
+type SubEntity e = (PersistEntity e, SqlBackend ~ PersistEntityBackend e, PathPiece (Key e), ToJSON (Key e), FromJSON (Key e))
 type SubEntityBackend s e = (YesodPersistBackend s ~ PersistEntityBackend e, SubEntity e)
 
 -- | Data.Time.Clock's `getCurrentTime` lifted for convenience.
@@ -34,3 +35,4 @@ bootstrapCheckBoxField label = checkBoxField
   where
     showVal = either $ const False
     -- style="margin-top: -20px; margin-bottom: 0">
+
