@@ -2,12 +2,13 @@
 
 module PKCloud.Import (module Export) where
 
+import Control.Monad as Export (filterM, mapM, mapM_, foldM)
 import Data.Int as Export
 import Data.Monoid as Export (Monoid(..), (<>))
 import Data.Text as Export (Text)
 import Data.Time.Clock as Export (UTCTime)
 import Database.Esqueleto as Export hiding (Value)
--- import Database.Persist.Class as Export (EntityField)
+import Database.Persist as Export (selectList) -- (EntityField)
 import Yesod.Auth as Export
 import Yesod.Core as Export hiding (Value, setTitle)
 import Yesod.Form as Export
