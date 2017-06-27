@@ -4,6 +4,7 @@ module PKCloud.Security (
     , PKCloudSecurityGroup(..)
     , PKCloudSecurityToSecurityGroup(..)
     , pkcloudRequireRead
+    , SubEntitySecureBackend
     ) where
 
 import Control.Monad (when)
@@ -87,6 +88,8 @@ pkcloudSecurityPermissionsHelper rl a = do
             Just member ->
                 return $ pkSecurityGroupMemberPermission (entityVal member) >= rl
         
+type SubEntitySecureBackend s e = (PKCloudSecurityToSecurityGroup s e, SubEntityBackend s e)
+
 -- -- Render widget to display/update
 -- renderPermissionWidget :: AccessControlListId -> Widget
 -- renderPermissionWidget aclId = undefined
