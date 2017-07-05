@@ -14,7 +14,7 @@ import Yesod.Form.Fields (checkBoxField)
 import Yesod.Form.Types (Field(..), FormMessage)
 
 -- | Type constraint for subsite persistent entities for convenience. 
-type SubEntity e = (PersistEntity e, SqlBackend ~ PersistEntityBackend e, PathPiece (Key e), ToJSON (Key e), FromJSON (Key e))
+type SubEntity e = (PersistEntity e, SqlBackend ~ PersistEntityBackend e, PathPiece (Key e), ToJSON (Key e), FromJSON (Key e), ToBackendKey SqlBackend e)
 type SubEntityBackend s e = (YesodPersistBackend s ~ PersistEntityBackend e, SubEntity e)
 
 -- | Data.Time.Clock's `getCurrentTime` lifted for convenience.
