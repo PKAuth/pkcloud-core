@@ -7,6 +7,7 @@ module PKCloud.Security (
     , pkcloudRequireWrite
     , pkcloudRequireCreate
     , SubEntitySecureBackend
+    , pkSecurityGroupsToFilter
     ) where
 
 import Control.Monad (when)
@@ -62,12 +63,34 @@ class (SubEntityBackend master (SecurityGroupMember master), SubEntityBackend ma
 
     pkSecurityGroupMemberGroup :: SecurityGroupMember master -> Key (SecurityGroup master)
     pkSecurityGroupMemberMember :: SecurityGroupMember master -> AuthId master
+    pkSecurityGroupMemberMemberField :: EntityField (SecurityGroupMember master) (AuthId master)
     pkSecurityGroupMemberPermission :: SecurityGroupMember master -> PermissionLevel
+    pkSecurityGroupMemberPermissionField :: EntityField (SecurityGroupMember master) PermissionLevel
     pkSecurityGroupUniqueMember :: Key (SecurityGroup master) -> AuthId master -> Unique (SecurityGroupMember master)
 
     -- Returns the user's primary SG (User's default SG, typically only contains the user as an admin).
     getPrimarySecurityGroup :: AuthId master -> Key (SecurityGroup master)
 
+    -- | Retrieves the list of security groups the given user has permission for. These have default implementations and you probably don't need to implement them.
+    pkSecurityGroupReadGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupReadGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite, pkSecurityGroupMemberPermissionField ==. PermissionLevelRead]
+
+    pkSecurityGroupWriteGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupWriteGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite]
+    
+    pkSecurityGroupCreateGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupCreateGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite]
+
+    pkSecurityGroupAdminGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupAdminGroups = pkSecurityGroupGroupsHelper $ pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin
+
+pkSecurityGroupGroupsHelper :: PKCloudSecurityGroup master => Filter (SecurityGroupMember master) -> AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+pkSecurityGroupGroupsHelper filter userId = do
+        groups <- runDB $ selectList [pkSecurityGroupMemberMemberField ==. userId, filter] []
+        return $ map (pkSecurityGroupMemberGroup . entityVal) groups
+
+pkSecurityGroupsToFilter :: PersistField typ => EntityField record typ -> [typ] -> Filter record
+pkSecurityGroupsToFilter field groups = FilterOr $ map (field ==.) groups
 
 -- -- config/models
 -- SecurityGroup
