@@ -4,6 +4,8 @@ module PKCloud.Security (
     , PKCloudSecurityGroup(..)
     , PKCloudSecurityToSecurityGroup(..)
     , pkcloudRequireRead
+    , pkcloudRequireWrite
+    , pkcloudRequireCreate
     , SubEntitySecureBackend
     ) where
 
@@ -29,6 +31,18 @@ class PKCloudSecurityPermissions master a where
 pkcloudRequireRead :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
 pkcloudRequireRead a = do
     allowed <- pkcloudCanRead a
+    when (not allowed) $ 
+        permissionDenied "Permission Denied"
+
+pkcloudRequireWrite :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireWrite a = do
+    allowed <- pkcloudCanWrite a
+    when (not allowed) $ 
+        permissionDenied "Permission Denied"
+
+pkcloudRequireCreate :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireCreate a = do
+    allowed <- pkcloudCanCreate a
     when (not allowed) $ 
         permissionDenied "Permission Denied"
 
