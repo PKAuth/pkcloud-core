@@ -39,6 +39,14 @@ class (GeneralPersistSql master (HandlerT master IO), YesodAuth master, PersistF
     pkcloudSetMessageSuccess :: Text -> HandlerT master IO ()
     pkcloudSetMessageSuccess = setMessage . toHtml
 
+    -- | Set an info message. By default, just calls `setMessage`. 
+    pkcloudSetMessageInfo :: Text -> HandlerT master IO ()
+    pkcloudSetMessageInfo = setMessage . toHtml
+
+    -- | Set a warning message. By default, just calls `setMessage`. 
+    pkcloudSetMessageWarning :: Text -> HandlerT master IO ()
+    pkcloudSetMessageWarning = setMessage . toHtml
+
     -- | Set a danger message. By default, just calls `setMessage`. 
     pkcloudSetMessageDanger :: Text -> HandlerT master IO ()
     pkcloudSetMessageDanger = setMessage . toHtml
