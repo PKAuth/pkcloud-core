@@ -18,7 +18,7 @@ class PKCloudApp app where
     -- pkcloudAppSummaryWidget :: app -> WidgetT app m ()
 
 -- | Typeclass that final website needs to implement. 
-class (GeneralPersistSql master (HandlerT master IO), YesodAuth master, PersistField (AuthId master)) => PKCloud master where
+class (GeneralPersistSql master (HandlerT master IO), YesodAuth master, Eq (AuthId master), PersistField (AuthId master)) => PKCloud master where
 --     -- Type classes to get user info???
 --     -- name, ...
     pkcloudDefaultLayout :: (PKCloudApp app) => app -> Text -> WidgetT master IO () -> HandlerT master IO Html
