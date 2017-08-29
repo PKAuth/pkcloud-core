@@ -11,8 +11,11 @@ class PKCloudApp app where
     -- | App's display name.
     pkcloudAppName :: app -> Text
 
-    -- | App's unique identifier. Should only be lowercase alphabetical characters and dashes (-).
+    -- | App's unique identifier. Must only be lowercase alphabetical characters and dashes (-).
     pkcloudAppIdentifier :: app -> Text
+
+    -- | App's root route (or homepage). 
+    pkcloudAppRoot :: Route app
 
     -- pkcloudAppIcon :: app -> () -- TODO: route to icon...
     -- pkcloudAppSummaryWidget :: app -> WidgetT app m ()
