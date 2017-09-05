@@ -26,6 +26,10 @@ import Yesod.Core (getUrlRender, addHeader, sendStatusJSON, MonadHandler, Handle
 --  - It might be worth moving this to a separate library or integrate with yesod.
 --  - Clients still need to consider potential short circuiting (ie get404, insert400, etc).
 --  - Maybe the error message type could be generalized.
+--  - Ideally these won't short circuit, but most of them do.
+
+-- TODO
+--  - Create patterns so that we can match on constructors but not create them.
 
 -- | Response to GET requests.
 data GetResponse a = 
@@ -60,7 +64,9 @@ instance FromJSON a => FromJSON (GetResponse a) where
                 x <- o .: "data"
                 return $ GetResponse x
             404 ->
-                return $ GetResponseNotFound
+                return GetResponseNotFound
+            401 -> 
+                return GetResponseUnauthorized
             400 -> do
                 msg <- o .: "error"
                 return $ GetResponseBadRequest msg
@@ -113,6 +119,26 @@ instance ToJSON a => ToJSON (PostResponse a) where
         , "error" .= msg
         ]
 
+instance FromJSON a => FromJSON (PostResponse a) where
+    parseJSON (Aeson.Object o) = do
+        status :: Int <- o .: "status"
+        case status of
+            201 -> do
+                x <- o .: "data"
+                return $ PostResponse x
+            404 -> 
+                return PostResponseNotFound
+            409 ->
+                return PostResponseConflict
+            401 ->
+                return PostResponseUnauthorized
+            400 -> do
+                msg <- o .: "error"
+                return $ PostResponseBadRequest msg
+            s -> fail $ "PostResponse: Invalid status code (" <> show s <> ")"
+    parseJSON _ = fail "PostResponse: Not a JSON object"
+        
+
 postResponse :: forall m a . (ToJSON a, MonadHandler m) => (a -> Route (HandlerSite m)) -> a -> m (PostResponse a)
 postResponse r x = do
     render <- getUrlRender
@@ -130,4 +156,25 @@ postResponseUnauthorized = sendStatusJSON unauthorized401 (PostResponseUnauthori
 
 postResponseBadRequest :: forall m a . (ToJSON a, MonadHandler m) => Text -> m (PostResponse a)
 postResponseBadRequest msg = sendStatusJSON badRequest400 (PostResponseBadRequest msg :: PostResponse a)
+
+
+-- Database functions that provide REST responses on failure.
+-- 
+-- Note: These functions depend on the short circuiting of the functions above. 
+
+
+-- get404 :: (Monad m, PersistStore backend, PersistRecordBackend val backend) => Key val -> ReaderT backend m val
+-- get404 k = do
+--     resM <- get k
+--     case resM of
+--         Just res ->
+--             return res
+--         Nothing ->
+--             postResponseNotFound
+
+-- getBy404 :: (PersistUnique backend, PersistRecordBackend val backend, MonadIO m) => Unique val -> ReaderT backend m (Entity val)
+-- 
+-- insert409 :: (MonadIO m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m (Key val)
+-- 
+-- insert409_ :: (MonadIO m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m ()
 
