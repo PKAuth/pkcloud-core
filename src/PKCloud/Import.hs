@@ -21,7 +21,9 @@ import Yesod.Persist.Core as Export (get404, getBy404, insert400, insert400_)
 
 import PKCloud.Core as Export
 import PKCloud.Internal as Export
+import PKCloud.Rest as Export
 import PKCloud.Security as Export
 
 (===.) :: forall v typ. PersistField typ => EntityField v typ -> typ -> P.Filter v
 (===.) = (P.==.)
+

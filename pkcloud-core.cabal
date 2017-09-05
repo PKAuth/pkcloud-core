@@ -19,6 +19,7 @@ library
                        PKCloud
                        PKCloud.File
                        PKCloud.Import
+                       PKCloud.Rest
                        PKCloud.Security
   other-modules:
                        PKCloud.Core
@@ -27,6 +28,7 @@ library
                        aeson
                      , base >= 4.7 && < 5
                      , esqueleto
+                     , http-types
                      , persistent
                      , persistent-template
                      , shakespeare
@@ -38,7 +40,7 @@ library
                      , yesod-form
                      , yesod-persistent
   default-language:    Haskell2010
-  default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, ConstraintKinds, RankNTypes, FlexibleInstances, UndecidableInstances, OverloadedStrings
+  default-extensions:  TypeFamilies, TemplateHaskell, QuasiQuotes, MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, ConstraintKinds, RankNTypes, FlexibleInstances, UndecidableInstances, OverloadedStrings, ScopedTypeVariables
   ghc-options:         -Werror -Wall -fno-warn-orphans -fno-warn-type-defaults -fno-warn-name-shadowing
 
 -- executable new-template-exe
