@@ -12,11 +12,19 @@ module PKCloud.Rest (
     , postResponseConflict
     , postResponseUnauthorized
     , postResponseBadRequest
+
+    , get404
+    , getBy404
+    , insert409
+    , insert409_
     ) where
 
+import Control.Monad.Reader (ReaderT)
 import Data.Aeson (ToJSON(..), FromJSON(..), (.=), (.:))
 import qualified Data.Aeson as Aeson
 import Data.Monoid ((<>))
+import Database.Persist.Class (Key, PersistStore, PersistRecordBackend, PersistUnique, PersistUniqueWrite, Unique, get, getBy, insertUnique)
+import Database.Persist.Types (Entity)
 import Data.Text (Text)
 import Network.HTTP.Types.Status (created201, badRequest400, unauthorized401, notFound404, conflict409)
 import Yesod.Core (getUrlRender, addHeader, sendStatusJSON, MonadHandler, HandlerSite, Route)
@@ -161,20 +169,38 @@ postResponseBadRequest msg = sendStatusJSON badRequest400 (PostResponseBadReques
 -- Database functions that provide REST responses on failure.
 -- 
 -- Note: These functions depend on the short circuiting of the functions above. 
-
-
--- get404 :: (Monad m, PersistStore backend, PersistRecordBackend val backend) => Key val -> ReaderT backend m val
--- get404 k = do
---     resM <- get k
---     case resM of
---         Just res ->
---             return res
---         Nothing ->
---             postResponseNotFound
-
--- getBy404 :: (PersistUnique backend, PersistRecordBackend val backend, MonadIO m) => Unique val -> ReaderT backend m (Entity val)
 -- 
--- insert409 :: (MonadIO m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m (Key val)
--- 
--- insert409_ :: (MonadIO m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m ()
+
+get404 :: (MonadHandler m, PersistStore backend, PersistRecordBackend val backend) => Key val -> ReaderT backend m val
+get404 k = do
+    resM <- get k
+    case resM of
+        Just res ->
+            return res
+        Nothing -> do
+            (_ :: GetResponse ()) <- getResponseNotFound
+            error "unreachable"
+
+getBy404 :: (PersistUnique backend, PersistRecordBackend val backend, MonadHandler m) => Unique val -> ReaderT backend m (Entity val)
+getBy404 u = do
+    resM <- getBy u
+    case resM of
+        Just res ->
+            return res
+        Nothing -> do
+            (_ :: GetResponse ()) <- getResponseNotFound
+            error "unreachable"
+
+insert409 :: (MonadHandler m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m (Key val)
+insert409 v = do
+    keyM <- insertUnique v
+    case keyM of
+        Just key ->
+            return key
+        Nothing -> do
+            (_ :: PostResponse ()) <- postResponseNotFound
+            error "unreachable"
+    
+insert409_ :: (MonadHandler m, PersistUniqueWrite backend, PersistRecordBackend val backend) => val -> ReaderT backend m ()
+insert409_ v = insert409 v >> return ()
 

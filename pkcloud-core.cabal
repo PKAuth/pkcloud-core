@@ -29,6 +29,7 @@ library
                      , base >= 4.7 && < 5
                      , esqueleto
                      , http-types
+                     , mtl
                      , persistent
                      , persistent-template
                      , shakespeare
