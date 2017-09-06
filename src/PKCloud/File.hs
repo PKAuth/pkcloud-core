@@ -5,10 +5,11 @@ import qualified Data.Text.Encoding as Text
 import Database.Persist
 import Yesod.Core.Types
 
-import PKCloud.Security
-
-class PKCloudSecurityPermissions master file => PKCloudFile master file | file -> master where
-    pkcloudFilePath :: file -> FilePath
+-- import PKCloud.Security
+-- 
+-- class PKCloudSecurityPermissions master file => PKCloudFile master file | file -> master where
+class PKCloudFile master file | file -> master where
+    pkcloudFilePath :: file -> FilePath -- TODO: make file type family?
     pkcloudFileContentType :: file -> Text
     pkcloudUniqueFilePath :: FilePath -> Unique file
 
@@ -27,10 +28,13 @@ class PKCloudSecurityPermissions master file => PKCloudFile master file | file -
 -- pkOpenFileSource :: PKCloudFile master file => file -> HandlerT master IO (Source (ResourceT IO) (Flush Builder))
 pkOpenFileTypedContent403 :: PKCloudFile master file => file -> HandlerT master IO TypedContent
 pkOpenFileTypedContent403 f = do
-    pkcloudRequireRead f
 
     let contentType = Text.encodeUtf8 $ pkcloudFileContentType f
     let path = pkcloudFilePath f
     let part = Nothing
 
     return $ TypedContent contentType $ ContentFile path part
+    -- TODO:
+    -- Catch IO
+    -- Use sendFilePart
+    -- TODO, support rest return type 403, 
