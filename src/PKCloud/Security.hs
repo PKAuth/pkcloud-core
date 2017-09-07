@@ -21,6 +21,7 @@ import Yesod.Core.Types
 import PKCloud.Internal
 import PKCloud.Core
 
+-- JP: Move this into the subsite??
 class PKCloudSecurityPermissions master a where
     pkcloudCanRead :: a -> HandlerT master IO Bool
     pkcloudCanWrite :: a -> HandlerT master IO Bool
