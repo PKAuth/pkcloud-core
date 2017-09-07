@@ -47,8 +47,6 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
                 return $ Left e
             Right folder -> do
                 let folderS = Text.unpack folder
-                -- Create directory if it doesn't exist.
-                liftIO $ System.createDirectoryIfMissing True folderS
 
                 -- JP: There could be a race condition here (probably unlikely though).
                 --
@@ -112,6 +110,9 @@ _pkCreateFileFromUploadAtPath fileInfo path = do
             Nothing ->
                 return $ Left "Could not create file. It already is in use."
             Just key -> do
+                -- Create directory if it doesn't exist.
+                liftIO $ System.createDirectoryIfMissing True $ File.dropFileName path
+
                 -- Move file.
                 liftIO $ fileMove fileInfo path
 
