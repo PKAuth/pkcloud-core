@@ -1,4 +1,4 @@
-module PKCloud.File (Path, PKCloudFile(..)) where
+module PKCloud.File (Path, PKCloudFile(..), pkCreateFileFromUploadOrExisting) where
 
 -- import Control.DeepSeq (NFData)
 import Control.Exception.Enclosed (catchIO) -- (catchDeep, asIOException)
@@ -98,7 +98,21 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
             -- Insert file into database.
             _pkInsertFile file $ return . Right
 
+-- | Helper function that either creates a file from an uploaded FileInfo or from an existing file at the given path. 
+-- If both an uploaded file and path are given, this function will attempt to move the uploaded file to the given path.
+pkCreateFileFromUploadOrExisting :: (PKCloudApp app, PKCloudFile master) => Maybe FileInfo -> Maybe Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
 
+-- If a file was uploaded and a filepath was provided, attempt to save file to given filepath.
+pkCreateFileFromUploadOrExisting (Just file) (Just path) = pkCreateFileFromUploadAtPath file path
+
+-- If a file was uploaded and a filepath was not provided, save file to a generated path.
+pkCreateFileFromUploadOrExisting (Just file) Nothing = pkCreateFileFromUpload file
+
+-- If a file was not uploaded and a filepath was provided, attempt to use the provided filepath.
+pkCreateFileFromUploadOrExisting Nothing (Just path) = pkCreateFileFromExisting path
+
+-- If a file was not uploaded and a filepath was not provided, fail with invalid request.
+pkCreateFileFromUploadOrExisting Nothing Nothing = return $ Left "No upload or existing file was provided."
 
 _catchIO :: (MonadBaseControl IO m, MonadHandler m) => ReaderT SqlBackend m (Either Text a) -> ReaderT SqlBackend m (Either Text a)
 _catchIO m = catchIO m $ \e -> do
