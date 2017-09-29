@@ -21,7 +21,6 @@ import Yesod.Form.Bootstrap3 as Export
 
 import PKCloud.Core as Export
 import PKCloud.Internal as Export
-import PKCloud.Rest as Export
 import PKCloud.Security as Export
 
 (===.) :: forall v typ. PersistField typ => EntityField v typ -> typ -> P.Filter v
