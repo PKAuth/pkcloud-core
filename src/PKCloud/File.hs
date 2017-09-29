@@ -7,9 +7,10 @@ import Control.Monad.Reader (ReaderT)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text
--- import qualified Data.Text.Encoding as Text
+import qualified Data.Text.Encoding as Text
 import Database.Persist
 import Database.Persist.Sql (transactionUndo, SqlBackend)
+import Network.Mime (defaultMimeLookup)
 import qualified System.FilePath as File
 import qualified System.Directory as System
 import Yesod.Core (lift, MonadHandler, MonadBaseControl)
@@ -31,7 +32,7 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
     type PKFile master = f | f -> master
 
     -- Creates a `PKFile master` given a filename, content type, and filepath.
-    pkFile :: Text -> Text -> Path -> PKFile master
+    pkFile :: Text -> Text -> Path -> PKFile master -- JP: Do we want creator (UserId), group, creation date, or created by application as well?
 
     -- | Get the filepath of the default folder to store files in. 
     -- May be useful to return different folders based on current user (`maybeAuthId`) or current application (`getYesod`).
@@ -79,6 +80,26 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
     pkCreateFileFromUploadAtPath :: FileInfo -> Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
     pkCreateFileFromUploadAtPath fileInfo path = _catchIO $ _pkCreateFileFromUploadAtPath fileInfo $ Text.unpack path
 
+    pkCreateFileFromExisting :: Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+    pkCreateFileFromExisting path = _catchIO $ do
+        -- Canonicalize path.
+        path <- liftIO $ System.canonicalizePath $ Text.unpack path
+
+        -- Make sure file exists.
+        exists <- liftIO $ System.doesFileExist path
+        if not exists then
+            return $ Left $ "File not found (" <> Text.pack path <> ")."
+        else do
+            -- Create file.
+            let name = Text.pack $ File.takeBaseName path
+            let contentType = Text.decodeUtf8 $ defaultMimeLookup $ Text.pack $ File.takeFileName path
+            let file = pkFile name contentType $ Text.pack path
+
+            -- Insert file into database.
+            _pkInsertFile file $ return . Right
+
+
+
 _catchIO :: (MonadBaseControl IO m, MonadHandler m) => ReaderT SqlBackend m (Either Text a) -> ReaderT SqlBackend m (Either Text a)
 _catchIO m = catchIO m $ \e -> do
     -- Rollback transaction.
@@ -104,25 +125,30 @@ _pkCreateFileFromUploadAtPath fileInfo path = do
             return $ Left $ "Filepath already exists (" <> Text.pack path <> ")."
         else do
 
-            -- Create file.
+            -- Create file and insert it into DB.
             let file = pkFile (fileName fileInfo) (fileContentType fileInfo) $ Text.pack path
+            _pkInsertFile file $ \key -> do
+                -- Create directory if it doesn't exist.
+                liftIO $ System.createDirectoryIfMissing True $ File.dropFileName path
 
-            -- Check for create permission.
-            lift $ lift $ pkcloudRequireCreate file
+                -- Move file.
+                liftIO $ fileMove fileInfo path
 
-            -- Insert into DB. 
-            keyM <- insertUnique file
-            case keyM of
-                Nothing ->
-                    return $ Left "Could not create file. It already is in use."
-                Just key -> do
-                    -- Create directory if it doesn't exist.
-                    liftIO $ System.createDirectoryIfMissing True $ File.dropFileName path
+                return $ Right key
 
-                    -- Move file.
-                    liftIO $ fileMove fileInfo path
+_pkInsertFile :: PKCloudFile master => PKFile master -> (Key (PKFile master) -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))) -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+_pkInsertFile file cps = do
+    -- Check for create permission.
+    lift $ lift $ pkcloudRequireCreate file
 
-                    return $ Right key
+    -- Insert into DB. 
+    keyM <- insertUnique file
+    case keyM of
+        Nothing ->
+            return $ Left "Could not create file. It already is in use."
+        Just key ->
+            cps key
+    
 
 
 -- import PKCloud.Security

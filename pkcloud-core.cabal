@@ -33,6 +33,7 @@ library
                      , esqueleto
                      , filepath
                      , http-types
+                     , mime-types
                      , mtl
                      , persistent
                      , persistent-template
