@@ -99,7 +99,7 @@ _pkCreateFileFromUploadAtPath fileInfo path = do
         return $ Left $ "Invalid filepath (" <> Text.pack path <> ")."
     else do
         -- Check if file already exists.
-        exists <- System.doesPathExist path
+        exists <- liftIO $ System.doesPathExist path
         if exists then
             return $ Left $ "Filepath already exists (" <> Text.pack path <> ")."
         else do
