@@ -98,25 +98,31 @@ _pkCreateFileFromUploadAtPath fileInfo path = do
     if not (File.isValid path) then
         return $ Left $ "Invalid filepath (" <> Text.pack path <> ")."
     else do
-        -- Create file.
-        let file = pkFile (fileName fileInfo) (fileContentType fileInfo) $ Text.pack path
+        -- Check if file already exists.
+        exists <- System.doesPathExist path
+        if exists then
+            return $ Left $ "Filepath already exists (" <> Text.pack path <> ")."
+        else do
 
-        -- Check for create permission.
-        lift $ lift $ pkcloudRequireCreate file
+            -- Create file.
+            let file = pkFile (fileName fileInfo) (fileContentType fileInfo) $ Text.pack path
 
-        -- Insert into DB. 
-        keyM <- insertUnique file
-        case keyM of
-            Nothing ->
-                return $ Left "Could not create file. It already is in use."
-            Just key -> do
-                -- Create directory if it doesn't exist.
-                liftIO $ System.createDirectoryIfMissing True $ File.dropFileName path
+            -- Check for create permission.
+            lift $ lift $ pkcloudRequireCreate file
 
-                -- Move file.
-                liftIO $ fileMove fileInfo path
+            -- Insert into DB. 
+            keyM <- insertUnique file
+            case keyM of
+                Nothing ->
+                    return $ Left "Could not create file. It already is in use."
+                Just key -> do
+                    -- Create directory if it doesn't exist.
+                    liftIO $ System.createDirectoryIfMissing True $ File.dropFileName path
 
-                return $ Right key
+                    -- Move file.
+                    liftIO $ fileMove fileInfo path
+
+                    return $ Right key
 
 
 -- import PKCloud.Security
