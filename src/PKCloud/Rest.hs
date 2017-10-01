@@ -43,6 +43,7 @@ import Yesod.Core (getUrlRender, addHeader, sendStatusJSON, MonadHandler, Handle
 data GetResponse a = 
       GetResponse a
     | GetResponseNotFound
+    | GetResponsePermissionDenied
     | GetResponseUnauthorized
     | GetResponseBadRequest Text -- Error message.
 
@@ -54,6 +55,10 @@ instance ToJSON a => ToJSON (GetResponse a) where
     toJSON GetResponseNotFound = Aeson.object [
           "status" .= (404 :: Int)
         , "error" .= ("Not found" :: Text)
+        ]
+    toJSON GetResponsePermissionDenied = Aeson.object [
+          "status" .= (403 :: Int)
+        , "error" .= ("Permission denied" :: Text)
         ]
     toJSON GetResponseUnauthorized = Aeson.object [
           "status" .= (401 :: Int)
@@ -73,6 +78,8 @@ instance FromJSON a => FromJSON (GetResponse a) where
                 return $ GetResponse x
             404 ->
                 return GetResponseNotFound
+            403 ->
+                return GetResponsePermissionDenied
             401 -> 
                 return GetResponseUnauthorized
             400 -> do
@@ -101,6 +108,7 @@ getResponseBadRequest msg = sendStatusJSON badRequest400 (GetResponseBadRequest 
 data PostResponse a = 
       PostResponse a
     | PostResponseNotFound
+    | PostResponsePermissionDenied
     | PostResponseConflict
     | PostResponseUnauthorized
     | PostResponseBadRequest Text
@@ -113,6 +121,10 @@ instance ToJSON a => ToJSON (PostResponse a) where
     toJSON PostResponseNotFound = Aeson.object [
           "status" .= (404 :: Int)
         , "error" .= ("Not found" :: Text)
+        ]
+    toJSON PostResponsePermissionDenied = Aeson.object [
+          "status" .= (403 :: Int)
+        , "error" .= ("Permission denied" :: Text)
         ]
     toJSON PostResponseConflict = Aeson.object [
           "status" .= (409 :: Int)
@@ -136,6 +148,8 @@ instance FromJSON a => FromJSON (PostResponse a) where
                 return $ PostResponse x
             404 -> 
                 return PostResponseNotFound
+            403 -> 
+                return PostResponsePermissionDenied
             409 ->
                 return PostResponseConflict
             401 ->
