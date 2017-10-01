@@ -1,4 +1,4 @@
-module PKCloud.File (Path, PKCloudFile(..), pkCreateFileFromUploadOrExisting) where
+module PKCloud.File (Path, PKCloudFile(..), pkCreateFileFromUploadOrExisting, pkSendFile) where
 
 -- import Control.DeepSeq (NFData)
 import Control.Exception.Enclosed (catchIO) -- (catchDeep, asIOException)
@@ -13,11 +13,12 @@ import Database.Persist.Sql (transactionUndo, SqlBackend)
 import Network.Mime (defaultMimeLookup)
 import qualified System.FilePath as File
 import qualified System.Directory as System
-import Yesod.Core (lift, MonadHandler, MonadBaseControl)
+import Yesod.Core (lift, MonadHandler, MonadBaseControl, sendFile, addHeader)
 import Yesod.Core.Types
 
 import PKCloud.Core
 import PKCloud.Internal
+import PKCloud.Rest (get404)
 import PKCloud.Security
 
 type Path = Text
@@ -33,6 +34,10 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
 
     -- Creates a `PKFile master` given a filename, content type, and filepath.
     pkFile :: Text -> Text -> Path -> PKFile master -- JP: Do we want creator (UserId), group, creation date, or created by application as well?
+
+    pkFileName :: PKFile master -> Text
+    pkFileContentType :: PKFile master -> Text
+    pkFilePath :: PKFile master -> Path
 
     -- | Get the filepath of the default folder to store files in. 
     -- May be useful to return different folders based on current user (`maybeAuthId`) or current application (`getYesod`).
@@ -97,6 +102,41 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
 
             -- Insert file into database.
             _pkInsertFile file $ return . Right
+
+-- JP: Can we remove the SQL constraint?
+-- JP: What should the return type be? We're (probably) not returning JSON...
+-- | Send a file as a response. Will return file parts if If-Range requested.
+-- Warning: Does not do any authentication.
+pkSendFile :: forall master . (GeneralPersistSql master (HandlerT master IO), PKCloudFile master) => Key (PKFile master) -> HandlerT master IO ()
+pkSendFile fileId = do
+    -- Get file info.
+    file <- runDB @master $ get404 fileId
+    let contentType = Text.encodeUtf8 $ pkFileContentType file
+    let path = Text.unpack $ pkFilePath file
+
+    -- JP: sendFile might already implement ranges.
+    -- rangeM <- parseRangeHeader
+    -- let send = case rangeM of
+    --         Nothing -> sendFile
+    --         Just (start, end) -> \c p -> sendFilePart c p start end
+    -- TODO: Verify no buffer vulnerabilities in sendFilePart. XXX
+
+    -- Set name.
+    -- Reference: https://www.schoolofhaskell.com/school/to-infinity-and-beyond/competition-winners/part-5
+    addHeader "Content-Disposition" $ Text.concat [ "attachment; filename=\"", pkFileName file, "\""]
+
+    -- Indicate that we accept ranges.
+    addHeader "Accept-Ranges" "bytes"
+
+    -- Send file.
+    sendFile contentType path
+
+    -- where
+        -- TODO: 
+        --  Return the array of ranges with the end being optional.
+        --  Check the If-Range.
+        -- parseRangeHeader = do
+            
 
 -- | Helper function that either creates a file from an uploaded FileInfo or from an existing file at the given path. 
 -- If both an uploaded file and path are given, this function will attempt to move the uploaded file to the given path.
