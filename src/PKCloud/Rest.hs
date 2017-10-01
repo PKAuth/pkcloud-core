@@ -4,11 +4,13 @@ module PKCloud.Rest (
       GetResponse
     , getResponse
     , getResponseNotFound
+    , getResponsePermissionDenied
     , getResponseUnauthorized
     , getResponseBadRequest
     , PostResponse
     , postResponse
     , postResponseNotFound
+    , postResponsePermissionDenied
     , postResponseConflict
     , postResponseUnauthorized
     , postResponseBadRequest
@@ -26,7 +28,7 @@ import Data.Monoid ((<>))
 import Database.Persist.Class (Key, PersistStore, PersistRecordBackend, PersistUnique, PersistUniqueWrite, Unique, get, getBy, insertUnique)
 import Database.Persist.Types (Entity)
 import Data.Text (Text)
-import Network.HTTP.Types.Status (created201, badRequest400, unauthorized401, notFound404, conflict409)
+import Network.HTTP.Types.Status (created201, badRequest400, unauthorized401, notFound404, conflict409, forbidden403)
 import Yesod.Core (getUrlRender, addHeader, sendStatusJSON, MonadHandler, HandlerSite, Route)
 
 -- JP: 
@@ -97,6 +99,9 @@ getResponseNotFound = sendStatusJSON notFound404 (GetResponseNotFound :: GetResp
 
 getResponseUnauthorized :: forall m a . (ToJSON a, MonadHandler m) => m (GetResponse a)
 getResponseUnauthorized = sendStatusJSON unauthorized401 (GetResponseUnauthorized :: GetResponse a)
+
+getResponsePermissionDenied :: forall m a . (ToJSON a, MonadHandler m) => m (GetResponse a)
+getResponsePermissionDenied = sendStatusJSON forbidden403 (GetResponsePermissionDenied :: GetResponse a)
 
 getResponseBadRequest :: forall m a . Text -> (ToJSON a, MonadHandler m) => m (GetResponse a)
 getResponseBadRequest msg = sendStatusJSON badRequest400 (GetResponseBadRequest msg :: GetResponse a)
@@ -169,6 +174,9 @@ postResponse r x = do
 
 postResponseNotFound :: forall m a . (ToJSON a, MonadHandler m) => m (PostResponse a)
 postResponseNotFound = sendStatusJSON notFound404 (PostResponseNotFound :: PostResponse a)
+
+postResponsePermissionDenied :: forall m a . (ToJSON a, MonadHandler m) => m (PostResponse a)
+postResponsePermissionDenied = sendStatusJSON forbidden403 (PostResponsePermissionDenied :: PostResponse a)
 
 postResponseConflict :: forall m a . (ToJSON a, MonadHandler m) => m (PostResponse a)
 postResponseConflict = sendStatusJSON conflict409 (PostResponseConflict :: PostResponse a)
