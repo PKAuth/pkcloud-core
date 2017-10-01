@@ -107,7 +107,7 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
 -- JP: What should the return type be? We're (probably) not returning JSON...
 -- | Send a file as a response. Will return file parts if If-Range requested.
 -- Warning: Does not do any authentication.
-pkSendFile :: forall master . (GeneralPersistSql master (HandlerT master IO), PKCloudFile master) => Key (PKFile master) -> HandlerT master IO ()
+pkSendFile :: forall master a . (GeneralPersistSql master (HandlerT master IO), PKCloudFile master) => Key (PKFile master) -> HandlerT master IO a
 pkSendFile fileId = do
     -- Get file info.
     file <- runDB @master $ get404 fileId
