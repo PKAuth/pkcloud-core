@@ -63,6 +63,7 @@ class ToMasterRoute child parent where
     toMasterRoute :: Route child -> Route parent
 
 -- Note: Move GeneralPersist to a new library??
+-- JP: Why is this needed? Can we drop it? XXX
 -- | Generalized `runDB` for database transactions with any underlying monad. 
 class Monad m => GeneralPersist site m | m -> site where
     type GeneralPersistBackend site
