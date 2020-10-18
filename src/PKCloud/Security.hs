@@ -23,26 +23,26 @@ import PKCloud.Core
 
 -- JP: Move this into the subsite??
 class PKCloudSecurityPermissions master a where
-    pkcloudCanRead :: a -> HandlerT master IO Bool
-    pkcloudCanWrite :: a -> HandlerT master IO Bool
-    pkcloudCanCreate :: a -> HandlerT master IO Bool
-    pkcloudCanAdmin :: a -> HandlerT master IO Bool
+    pkcloudCanRead :: a -> HandlerFor master Bool
+    pkcloudCanWrite :: a -> HandlerFor master Bool
+    pkcloudCanCreate :: a -> HandlerFor master Bool
+    pkcloudCanAdmin :: a -> HandlerFor master Bool
 
 -- | Requires that the current user can read `a`. 
 -- Otherwise, returns 403 permission denied.
-pkcloudRequireRead :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireRead :: PKCloudSecurityPermissions master a => a -> HandlerFor master ()
 pkcloudRequireRead a = do
     allowed <- pkcloudCanRead a
     when (not allowed) $ 
         permissionDenied "Permission Denied"
 
-pkcloudRequireWrite :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireWrite :: PKCloudSecurityPermissions master a => a -> HandlerFor master ()
 pkcloudRequireWrite a = do
     allowed <- pkcloudCanWrite a
     when (not allowed) $ 
         permissionDenied "Permission Denied"
 
-pkcloudRequireCreate :: PKCloudSecurityPermissions master a => a -> HandlerT master IO ()
+pkcloudRequireCreate :: PKCloudSecurityPermissions master a => a -> HandlerFor master ()
 pkcloudRequireCreate a = do
     allowed <- pkcloudCanCreate a
     when (not allowed) $ 
@@ -73,19 +73,20 @@ class (SubEntityBackend master (SecurityGroupMember master), SubEntityBackend ma
     getPrimarySecurityGroup :: AuthId master -> Key (SecurityGroup master)
 
     -- | Retrieves the list of security groups the given user has permission for. These have default implementations and you probably don't need to implement them.
-    pkSecurityGroupReadGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupReadGroups :: AuthId master -> HandlerFor master [Key (SecurityGroup master)]
     pkSecurityGroupReadGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite, pkSecurityGroupMemberPermissionField ==. PermissionLevelRead]
 
-    pkSecurityGroupWriteGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupWriteGroups :: AuthId master -> HandlerFor master [Key (SecurityGroup master)]
     pkSecurityGroupWriteGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite]
     
-    pkSecurityGroupCreateGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupCreateGroups :: AuthId master -> HandlerFor master [Key (SecurityGroup master)]
     pkSecurityGroupCreateGroups = pkSecurityGroupGroupsHelper $ FilterOr [pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin, pkSecurityGroupMemberPermissionField ==. PermissionLevelWrite]
 
-    pkSecurityGroupAdminGroups :: AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+    pkSecurityGroupAdminGroups :: AuthId master -> HandlerFor master [Key (SecurityGroup master)]
     pkSecurityGroupAdminGroups = pkSecurityGroupGroupsHelper $ pkSecurityGroupMemberPermissionField ==. PermissionLevelAdmin
 
-pkSecurityGroupGroupsHelper :: PKCloudSecurityGroup master => Filter (SecurityGroupMember master) -> AuthId master -> HandlerT master IO [Key (SecurityGroup master)]
+
+pkSecurityGroupGroupsHelper :: PKCloudSecurityGroup master => Filter (SecurityGroupMember master) -> AuthId master -> HandlerFor master [Key (SecurityGroup master)]
 pkSecurityGroupGroupsHelper filter userId = do
         groups <- runDB $ selectList [pkSecurityGroupMemberMemberField ==. userId, filter] []
         return $ map (pkSecurityGroupMemberGroup . entityVal) groups
@@ -107,7 +108,7 @@ pkSecurityGroupsToFilter field groups = FilterOr $ map (field ==.) groups
 
 class PKCloudSecurityGroup master => PKCloudSecurityToSecurityGroup master a where
     -- Get the security group that manages the given type. 
-    pkcloudToSecurityGroup :: a -> HandlerT master IO (Key (SecurityGroup master))
+    pkcloudToSecurityGroup :: a -> HandlerFor master (Key (SecurityGroup master))
 
 instance PKCloudSecurityToSecurityGroup master a => PKCloudSecurityPermissions master a where
     pkcloudCanRead = pkcloudSecurityPermissionsHelper PermissionLevelRead
@@ -115,7 +116,7 @@ instance PKCloudSecurityToSecurityGroup master a => PKCloudSecurityPermissions m
     pkcloudCanCreate = pkcloudSecurityPermissionsHelper PermissionLevelWrite
     pkcloudCanAdmin = pkcloudSecurityPermissionsHelper PermissionLevelAdmin
 
-pkcloudSecurityPermissionsHelper :: (PKCloudSecurityToSecurityGroup site a) => PermissionLevel -> a -> HandlerT site IO Bool
+pkcloudSecurityPermissionsHelper :: (PKCloudSecurityToSecurityGroup site a) => PermissionLevel -> a -> HandlerFor site Bool
 pkcloudSecurityPermissionsHelper rl a = do
         userId <- requireAuthId
         groupId <- pkcloudToSecurityGroup a

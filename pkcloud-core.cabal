@@ -34,6 +34,7 @@ library
                      , filepath
                      , http-types
                      , mime-types
+                     , monad-control
                      , mtl
                      , persistent
                      , persistent-template

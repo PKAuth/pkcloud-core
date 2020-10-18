@@ -21,41 +21,41 @@ class PKCloudApp app where
     -- pkcloudAppSummaryWidget :: app -> WidgetT app m ()
 
 -- | Typeclass that final website needs to implement. 
-class (GeneralPersistSql master (HandlerT master IO), YesodAuth master, Eq (AuthId master), PersistField (AuthId master)) => PKCloud master where
+class (GeneralPersistSql master (HandlerFor master), YesodAuth master, Eq (AuthId master), PersistField (AuthId master)) => PKCloud master where
 --     -- Type classes to get user info???
 --     -- name, ...
-    pkcloudDefaultLayout :: (PKCloudApp app, ToMasterRoute app master) => app -> Text -> WidgetT master IO () -> HandlerT master IO Html
-    pkcloudSetTitle :: Html -> WidgetT master IO ()
+    pkcloudDefaultLayout :: (PKCloudApp app, ToMasterRoute app master) => app -> Text -> WidgetFor master () -> HandlerFor master Html
+    pkcloudSetTitle :: Html -> WidgetFor master ()
 
     -- | Retrieve the display name for a user.
-    pkcloudDisplayName :: AuthId master -> HandlerT master IO Text
+    pkcloudDisplayName :: AuthId master -> HandlerFor master Text
 
     -- | Retrieve the unique username for a user. 
     -- Usernames should be url safe.
-    pkcloudUniqueUsername :: AuthId master -> HandlerT master IO Text
+    pkcloudUniqueUsername :: AuthId master -> HandlerFor master Text
 
     -- | Retrieve user for unique username.
     -- Usernames should be url safe.
-    pkcloudLookupUniqueUsername :: Text -> HandlerT master IO (Maybe (AuthId master))
+    pkcloudLookupUniqueUsername :: Text -> HandlerFor master (Maybe (AuthId master))
 
     -- | Set a successful message. By default, just calls `setMessage`. 
-    pkcloudSetMessageSuccess :: Text -> HandlerT master IO ()
+    pkcloudSetMessageSuccess :: Text -> HandlerFor master ()
     pkcloudSetMessageSuccess = setMessage . toHtml
 
     -- | Set an info message. By default, just calls `setMessage`. 
-    pkcloudSetMessageInfo :: Text -> HandlerT master IO ()
+    pkcloudSetMessageInfo :: Text -> HandlerFor master ()
     pkcloudSetMessageInfo = setMessage . toHtml
 
     -- | Set a warning message. By default, just calls `setMessage`. 
-    pkcloudSetMessageWarning :: Text -> HandlerT master IO ()
+    pkcloudSetMessageWarning :: Text -> HandlerFor master ()
     pkcloudSetMessageWarning = setMessage . toHtml
 
     -- | Set a danger message. By default, just calls `setMessage`. 
-    pkcloudSetMessageDanger :: Text -> HandlerT master IO ()
+    pkcloudSetMessageDanger :: Text -> HandlerFor master ()
     pkcloudSetMessageDanger = setMessage . toHtml
 
     -- | Specifies whether the given app is enabled for the given user. 
-    pkcloudAppEnabled :: (PKCloudApp app) => app -> AuthId master -> HandlerT master IO Bool
+    pkcloudAppEnabled :: (PKCloudApp app) => app -> AuthId master -> HandlerFor master Bool
     pkcloudAppEnabled _ _ = return True
 
 -- TODO: Move to Yesod.Core.

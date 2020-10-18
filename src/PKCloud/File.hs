@@ -4,6 +4,7 @@ module PKCloud.File (Path, PKCloudFile(..), pkCreateFileFromUploadOrExisting, pk
 import Control.Exception.Enclosed (catchIO) -- (catchDeep, asIOException)
 import Control.Monad.IO.Class
 import Control.Monad.Reader (ReaderT)
+import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -13,7 +14,7 @@ import Database.Persist.Sql (transactionUndo, SqlBackend)
 import Network.Mime (defaultMimeLookup)
 import qualified System.FilePath as File
 import qualified System.Directory as System
-import Yesod.Core (lift, MonadHandler, MonadBaseControl, sendFile, addHeader)
+import Yesod.Core (lift, liftHandler, MonadHandler, sendFile, addHeader)
 import Yesod.Core.Types
 
 import PKCloud.Core
@@ -42,9 +43,9 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
     -- | Get the filepath of the default folder to store files in. 
     -- May be useful to return different folders based on current user (`maybeAuthId`) or current application (`getYesod`).
     -- Return `Nothing` if there is no default folder.
-    pkDefaultFileFolder :: PKCloudApp app => HandlerT app (HandlerT master IO) (Either Text Path)
+    pkDefaultFileFolder :: PKCloudApp app => SubHandlerFor app master (Either Text Path)
 
-    pkCreateFileFromUpload :: PKCloudApp app => FileInfo -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+    pkCreateFileFromUpload :: (PKCloudApp app, MonadBaseControl IO (SubHandlerFor app master)) => FileInfo -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
     pkCreateFileFromUpload fileInfo = _catchIO $ do
         -- Get default folder.
         folderE <- lift pkDefaultFileFolder
@@ -82,10 +83,10 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
                     return path
 
     
-    pkCreateFileFromUploadAtPath :: FileInfo -> Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+    pkCreateFileFromUploadAtPath :: MonadBaseControl IO (SubHandlerFor app master) => FileInfo -> Path -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
     pkCreateFileFromUploadAtPath fileInfo path = _catchIO $ _pkCreateFileFromUploadAtPath fileInfo $ Text.unpack path
 
-    pkCreateFileFromExisting :: Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+    pkCreateFileFromExisting :: MonadBaseControl IO (SubHandlerFor app master) => Path -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
     pkCreateFileFromExisting path = _catchIO $ do
         -- Canonicalize path.
         path <- liftIO $ System.canonicalizePath $ Text.unpack path
@@ -107,7 +108,7 @@ class (SubEntity (PKFile master), PKCloudSecurityPermissions master (PKFile mast
 -- JP: What should the return type be? We're (probably) not returning JSON...
 -- | Send a file as a response. Will return file parts if If-Range requested.
 -- Warning: Does not do any authentication.
-pkSendFile :: forall master a . (GeneralPersistSql master (HandlerT master IO), PKCloudFile master) => Key (PKFile master) -> HandlerT master IO a
+pkSendFile :: forall master a . (GeneralPersistSql master (HandlerFor master), PKCloudFile master) => Key (PKFile master) -> HandlerFor master a
 pkSendFile fileId = do
     -- Get file info.
     file <- runDB @master $ get404 fileId
@@ -140,7 +141,7 @@ pkSendFile fileId = do
 
 -- | Helper function that either creates a file from an uploaded FileInfo or from an existing file at the given path. 
 -- If both an uploaded file and path are given, this function will attempt to move the uploaded file to the given path.
-pkCreateFileFromUploadOrExisting :: (PKCloudApp app, PKCloudFile master) => Maybe FileInfo -> Maybe Path -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+pkCreateFileFromUploadOrExisting :: (PKCloudApp app, PKCloudFile master, MonadBaseControl IO (SubHandlerFor app master)) => Maybe FileInfo -> Maybe Path -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
 
 -- If a file was uploaded and a filepath was provided, attempt to save file to given filepath.
 pkCreateFileFromUploadOrExisting (Just file) (Just path) = pkCreateFileFromUploadAtPath file path
@@ -164,7 +165,7 @@ _catchIO m = catchIO m $ \e -> do
     -- Return exception.
     return $ Left $ Text.pack $ show e
 
-_pkCreateFileFromUploadAtPath :: PKCloudFile master => FileInfo -> String -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+_pkCreateFileFromUploadAtPath :: PKCloudFile master => FileInfo -> String -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
 _pkCreateFileFromUploadAtPath fileInfo path = do
     -- Canonicalize path.
     path <- liftIO $ System.canonicalizePath path
@@ -190,10 +191,10 @@ _pkCreateFileFromUploadAtPath fileInfo path = do
 
                 return $ Right key
 
-_pkInsertFile :: PKCloudFile master => PKFile master -> (Key (PKFile master) -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))) -> ReaderT SqlBackend (HandlerT app (HandlerT master IO)) (Either Text (Key (PKFile master)))
+_pkInsertFile :: PKCloudFile master => PKFile master -> (Key (PKFile master) -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))) -> ReaderT SqlBackend (SubHandlerFor app master) (Either Text (Key (PKFile master)))
 _pkInsertFile file cps = do
     -- Check for create permission.
-    lift $ lift $ pkcloudRequireCreate file
+    lift $ liftHandler $ pkcloudRequireCreate file
 
     -- Insert into DB. 
     keyM <- insertUnique file
