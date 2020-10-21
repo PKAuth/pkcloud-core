@@ -24,7 +24,8 @@ class PKCloudApp app where
 class (GeneralPersistSql master (HandlerFor master), YesodAuth master, Eq (AuthId master), PersistField (AuthId master)) => PKCloud master where
 --     -- Type classes to get user info???
 --     -- name, ...
-    pkcloudDefaultLayout :: (PKCloudApp app, ToMasterRoute app master) => app -> Text -> WidgetFor master () -> HandlerFor master Html
+    -- pkcloudDefaultLayout :: (PKCloudApp app, ToMasterRoute app master) => app -> Text -> WidgetFor master () -> HandlerFor master Html
+    pkcloudDefaultLayout :: (PKCloudApp app, ToMasterRoute app master) => app -> WidgetFor master () -> HandlerFor master Html
     pkcloudSetTitle :: Html -> WidgetFor master ()
 
     -- | Retrieve the display name for a user.
@@ -61,6 +62,15 @@ class (GeneralPersistSql master (HandlerFor master), YesodAuth master, Eq (AuthI
 -- TODO: Move to Yesod.Core.
 class ToMasterRoute child parent where
     toMasterRoute :: Route child -> Route parent
+
+-- instance ToMasterRoute app master => RedirectUrl master (Route app) where
+--     toTextUrl r = toTextUrl (toMasterRoute r :: Route master) -- getRouteToParent?
+-- instance (MonadHandler m, HandlerSite m ~ master, SubHandlerSite m ~ app) => RedirectUrl master (Route app) where
+-- instance (SubHandlerSite m ~ app, HandlerSite m ~ master) => RedirectUrl master (Route app) where
+-- instance (SubHandlerSite m ~ app, HandlerSite m ~ master) => RedirectUrl master (Route app) where
+--     toTextUrl r = do
+--       f <- getRouteToParent
+--       toTextUrl $ f r
 
 -- Note: Move GeneralPersist to a new library??
 -- JP: Why is this needed? Can we drop it? XXX

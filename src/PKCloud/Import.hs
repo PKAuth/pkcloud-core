@@ -10,7 +10,7 @@ import Data.Int as Export
 import Data.Monoid as Export (Monoid(..), (<>))
 import Data.Text as Export (Text)
 import Data.Time.Clock as Export (UTCTime)
-import Database.Esqueleto as Export hiding (Value)
+import Database.Esqueleto as Export -- hiding (Value)
 import Database.Persist as Export (selectList) -- (EntityField)
 import qualified Database.Persist as P
 import Yesod.Auth as Export
