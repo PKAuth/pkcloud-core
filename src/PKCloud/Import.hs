@@ -5,7 +5,7 @@ module PKCloud.Import (
   , (===.)
   ) where
 
-import Control.Monad as Export (filterM, mapM, mapM_, foldM)
+import Control.Monad as Export (when, unless, filterM, mapM, mapM_, foldM)
 import Data.Int as Export
 import Data.Monoid as Export (Monoid(..), (<>))
 import Data.Text as Export (Text)
@@ -18,6 +18,7 @@ import Yesod.Core as Export hiding (Value, setTitle)
 import Yesod.Form as Export
 import Yesod.Form.Bootstrap3 as Export
 -- import Yesod.Persist.Core as Export (get404, getBy404, insert400, insert400_)
+import Yesod.Persist.Core as Export (get404) -- , getBy404, insert400, insert400_)
 
 import PKCloud.Core as Export
 import PKCloud.Internal as Export
